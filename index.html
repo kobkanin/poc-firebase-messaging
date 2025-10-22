@@ -174,6 +174,9 @@
       // foreground messages
       onMessage(m, (payload) => {
         console.log("[FCM] foreground message:", payload);
+
+        if (payload?.notification) return;
+
         // โชว์เป็น Notification ผ่าน SW เพื่อให้หน้าปัจจุบันก็เห็นแบบเดียวกัน
         if (navigator.serviceWorker?.ready) {
           navigator.serviceWorker.ready.then((reg) => {
