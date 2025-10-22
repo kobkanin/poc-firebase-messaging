@@ -1,4 +1,4 @@
-/* firebase-messaging-sw.js */
+/* firebase-messaging-sw.js (SW-managed only) */
 importScripts(
   "https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"
 );
@@ -6,7 +6,7 @@ importScripts(
   "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"
 );
 
-// ✅ ใช้ compat API ใน SW
+// ใช้ compat API ใน SW
 firebase.initializeApp({
   apiKey: "AIzaSyBEYRc3lWgrhf3JuzBVOI33sdelL53xuuk",
   authDomain: "onerev-dev.firebaseapp.com",
@@ -18,8 +18,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Base ของ GitHub Pages (เดาว่า repo ชื่อ poc-firebase-messaging)
-const scopeBase = self.registration.scope; // e.g. https://kobkanin.github.io/poc-firebase-messaging/
+// base ของ GitHub Pages (เช่น https://kobkanin.github.io/poc-firebase-messaging/)
+const scopeBase = self.registration.scope;
 const iconUrl = new URL("icon-192.png", scopeBase).toString();
 
 const notification_options = {
@@ -30,9 +30,14 @@ const notification_options = {
   data: { link_url: scopeBase },
 };
 
-// เมื่อได้รับข้อความตอนอยู่เบื้องหลัง
+// ถ้ามี payload.notification แปลว่าเบราว์เซอร์/FCM จะโชว์เอง → ไม่ต้องซ้ำ
 messaging.onBackgroundMessage((payload) => {
-  console.log("[SW] Background message:", payload);
+  if (payload?.notification) {
+    console.log("[SW] has notification -> skip duplicate");
+    return;
+  }
+
+  console.log("[SW] background payload:", payload);
   const data = payload?.data || {};
   const { title = "Message", link_url, ...rest } = data;
 
@@ -45,7 +50,7 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, opts);
 });
 
-// เมื่อผู้ใช้คลิกที่ Notification
+// คลิกแล้วโฟกัส/เปิดแท็บใน scope
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification?.data?.link_url || scopeBase;
@@ -55,15 +60,10 @@ self.addEventListener("notificationclick", (event) => {
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
-          // ถ้าแท็บเดิมเปิดอยู่แล้ว ก็โฟกัสไปที่แท็บนั้น
-          if (client.url.startsWith(scopeBase) && "focus" in client) {
+          if (client.url.startsWith(scopeBase) && "focus" in client)
             return client.focus();
-          }
         }
-        // ไม่งั้นก็เปิดแท็บใหม่
-        if (clients.openWindow) {
-          return clients.openWindow(url);
-        }
+        if (clients.openWindow) return clients.openWindow(url);
       })
   );
 });

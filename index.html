@@ -2,7 +2,7 @@
 <html lang="th">
   <head>
     <meta charset="utf-8" />
-    <title>Poc FireBase Messaging</title>
+    <title>POC Firebase Messaging</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
@@ -76,9 +76,9 @@
         onMessage,
       } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js";
 
-      // --- base path สำหรับ GitHub Pages: https://<user>.github.io/<repo>/...
+      // ---- Base path สำหรับ GitHub Pages: https://<user>.github.io/<repo>/
       const parts = location.pathname.split("/").filter(Boolean); // ["poc-firebase-messaging", ...]
-      const BASE = parts.length ? `/${parts[0]}/` : "/"; // "/poc-firebase-messaging/" บน Pages, "/" เมื่อต้นโดเมน
+      const BASE = parts.length ? `/${parts[0]}/` : "/";
       const SW_PATH = `${BASE}firebase-messaging-sw.js`;
 
       const firebaseConfig = {
@@ -102,6 +102,7 @@
       const tokenBox = document.getElementById("tokenBox");
       const tokenText = document.getElementById("tokenText");
 
+      // default options เฉพาะใช้ตอน onMessage เพื่อ preview
       const notificationOptions = {
         body: "Hello from FCM!",
         icon: `${BASE}icon-192.png`,
@@ -115,25 +116,23 @@
           btn.disabled = true;
           btn.textContent = "Loading...";
 
-          // ขอสิทธิ์แจ้งเตือน (ถ้ายังไม่ได้ให้)
           if (Notification.permission !== "granted") {
             await Notification.requestPermission();
           }
           if (Notification.permission !== "granted") {
-            alert("อนุญาตการแจ้งเตือนก่อนนะครับ");
+            alert("ต้องอนุญาตการแจ้งเตือนก่อนนะครับ");
             return;
           }
 
-          // จดทะเบียน Service Worker ด้วย scope ที่ถูกต้องบน GitHub Pages
+          // จดทะเบียน SW ด้วย scope ถูกต้อง (กัน Firebase ไปจดทะเบียนที่รากโดเมน)
           const reg = await navigator.serviceWorker.register(SW_PATH, {
             scope: BASE,
           });
           await reg.update();
 
-          // สำคัญ: ส่ง registration เข้าไปให้ getToken เพื่อกัน Firebase ไปจดทะเบียน SW เองที่รากโดเมน
           const currentToken = await getToken(m, {
             vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: reg,
+            serviceWorkerRegistration: reg, // **จุดสำคัญ**
           });
 
           if (currentToken) {
@@ -141,7 +140,7 @@
             tokenText.textContent = currentToken;
             tokenBox.hidden = false;
 
-            // เด้งโนติเล็ก ๆ ให้รู้ว่าเรียบร้อย
+            // แจ้งเตือนสั้น ๆ ให้รู้ว่าพร้อมใช้งาน
             reg.showNotification("Successful", notificationOptions);
           } else {
             alert(
@@ -167,29 +166,23 @@
         }
       });
 
-      btnHide.addEventListener("click", () => {
-        tokenBox.hidden = true;
-      });
+      btnHide.addEventListener("click", () => (tokenBox.hidden = true));
 
-      // foreground messages
+      // รับข้อความตอน foreground → แสดงผ่าน SW (ถ้า payload มี notification ก็ไม่ซ้ำ)
       onMessage(m, (payload) => {
-        console.log("[FCM] foreground message:", payload);
+        console.log("[FCM] foreground:", payload);
+        if (payload?.notification) return; // ป้องกันซ้ำถ้าฝั่งส่งเผลอแนบ notification มา
 
-        if (payload?.notification) return;
-
-        // โชว์เป็น Notification ผ่าน SW เพื่อให้หน้าปัจจุบันก็เห็นแบบเดียวกัน
-        if (navigator.serviceWorker?.ready) {
-          navigator.serviceWorker.ready.then((reg) => {
-            const data = payload?.data || {};
-            const { title = "Message", link_url, ...rest } = data;
-            const opts = {
-              ...notificationOptions,
-              ...rest,
-              data: { link_url: link_url || notificationOptions.data.link_url },
-            };
-            reg.showNotification(title, opts);
-          });
-        }
+        const data = payload?.data || {};
+        const { title = "Message", link_url, ...rest } = data;
+        const opts = {
+          ...notificationOptions,
+          ...rest,
+          data: { link_url: link_url || notificationOptions.data.link_url },
+        };
+        navigator.serviceWorker.ready.then((reg) =>
+          reg.showNotification(title, opts)
+        );
       });
     </script>
   </body>
