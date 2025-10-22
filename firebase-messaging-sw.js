@@ -26,16 +26,12 @@ const notification_options = {
   body: "Background message from FCM",
   icon: iconUrl,
   badge: iconUrl,
-  tag: "kob-demo", // tag เดิมๆ ไว้รวมกลุ่ม
-  renotify: true, // ถ้ามี tag เดิม ให้สั่น/เด้งเตือนอีก
-  requireInteraction: true, // อยู่ค้างจนกดปิด (บางเครื่องช่วยให้ heads-up)
-  vibrate: [200, 100, 200], // ให้สั่น (Android มัก heads-up ถ้ามีสั่น/เสียง)
-  timestamp: Date.now(),
+  vibrate: [200, 100, 200],
+  requireInteraction: true,
+  renotify: true,
+  tag: "kob-demo",
+  silent: false,
   data: { link_url: scopeBase },
-  actions: [
-    // ปุ่ม action ก็ช่วยดึงความสนใจ
-    { action: "open", title: "Open" },
-  ],
 };
 
 // ถ้ามี payload.notification แปลว่าเบราว์เซอร์/FCM จะโชว์เอง → ไม่ต้องซ้ำ
