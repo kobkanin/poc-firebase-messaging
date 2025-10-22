@@ -1,4 +1,15 @@
-/* firebase-messaging-sw.js (SW-managed only) */
+// sw.js — PWA minimal version
+self.addEventListener("install", (event) => {
+  console.log("[SW] installed");
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  console.log("[SW] activated");
+  self.clients.claim();
+});
+
+/* ===== FCM (compat in SW) ===== */
 importScripts(
   "https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"
 );
