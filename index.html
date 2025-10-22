@@ -139,9 +139,6 @@
             console.log("[FCM] token:", currentToken);
             tokenText.textContent = currentToken;
             tokenBox.hidden = false;
-
-            // แจ้งเตือนสั้น ๆ ให้รู้ว่าพร้อมใช้งาน
-            reg.showNotification("Successful", notificationOptions);
           } else {
             alert(
               "ยังไม่ได้รับ token (อาจถูกบล็อก permission หรือ browser ไม่รองรับ)"
