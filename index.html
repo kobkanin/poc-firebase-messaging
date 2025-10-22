@@ -99,8 +99,8 @@
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
           .register(`${BASE}sw.js`, { scope: BASE })
-          .then((r) => console.log("[PWA] SW registered", r.scope))
-          .catch((err) => console.error("[PWA] SW register failed", err));
+          .then((r) => console.log("[PWA] registered", r.scope))
+          .catch((err) => console.error("[PWA] registration failed", err));
       }
 
       const app = initializeApp(firebaseConfig);
