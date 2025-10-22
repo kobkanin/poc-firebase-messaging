@@ -192,7 +192,9 @@
       if ("serviceWorker" in navigator) {
         // this will register the service worker or update it. More on service worker soon
         navigator.serviceWorker
-          .register("./firebase-messaging-sw.js", { scope: "./" })
+          .register("/poc-firebase-messaging/firebase-messaging-sw.js", {
+            scope: "./",
+          })
           .then(function (registration) {
             console.log("Service Worker Registered");
             setTimeout(() => {
