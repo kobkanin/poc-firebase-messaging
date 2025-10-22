@@ -106,6 +106,10 @@
       appId: "1:782528078431:web:ccd3e92370c8e316c531ea",
     };
 
+    // คำนวณ basePath สำหรับ GitHub Pages
+    const parts = location.pathname.split("/").filter(Boolean);
+    const basePath = parts.length ? `/${parts[0]}/` : "/";
+
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     // Initialize Firebase Cloud Messaging and get a reference to the service
@@ -192,8 +196,8 @@
       if ("serviceWorker" in navigator) {
         // this will register the service worker or update it. More on service worker soon
         navigator.serviceWorker
-          .register("/poc-firebase-messaging/firebase-messaging-sw.js", {
-            scope: "/poc-firebase-messaging",
+          .register(`${basePath}firebase-messaging-sw.js`, {
+            scope: basePath,
           })
           .then(function (registration) {
             console.log("Service Worker Registered");
