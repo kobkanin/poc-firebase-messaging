@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <title>POC Firebase Messaging</title>
+    <!-- PWA meta + manifest -->
+    <meta name="theme-color" content="#0ea5e9" />
+    <link rel="manifest" href="./manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
@@ -92,6 +95,13 @@
 
       const VAPID_KEY =
         "BFCv-L3AhpTkUvrUyGYLHpSv-CnSI0Nla7XaafAU4TqyXXfCZJrtrzScBMhFFfjryDZsPg0Ew8qKywXfLt_bYIg";
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register(`${BASE}sw.js`, { scope: BASE })
+          .then((r) => console.log("[PWA] SW registered", r.scope))
+          .catch((err) => console.error("[PWA] SW register failed", err));
+      }
 
       const app = initializeApp(firebaseConfig);
       const m = getMessaging(app);
