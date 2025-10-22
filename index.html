@@ -195,8 +195,11 @@
 
       if ("serviceWorker" in navigator) {
         // this will register the service worker or update it. More on service worker soon
+        const path = `${basePath}firebase-messaging-sw.js`;
+        console.log(path);
+
         navigator.serviceWorker
-          .register(`${basePath}firebase-messaging-sw.js`, {
+          .register(path, {
             scope: basePath,
           })
           .then(function (registration) {
