@@ -1,6 +1,9 @@
-<html>
+<!DOCTYPE html>
+<html lang="th">
   <head>
+    <meta charset="utf-8" />
     <title>Poc FireBase Messaging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
@@ -16,39 +19,15 @@
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
       }
-      .badge {
-        display: inline-block;
-        background: #e6f4ff;
-        color: #055;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-      }
-      .row {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-      }
-      img.icon {
-        width: 64px;
-        height: 64px;
-      }
-      a.btn,
-      button.btn {
+      .btn {
         display: inline-block;
         margin-top: 12px;
         padding: 10px 14px;
         border-radius: 8px;
         background: #0ea5e9;
         color: #fff;
-        text-decoration: none;
         border: none;
         cursor: pointer;
-      }
-      code {
-        background: #f3f3f3;
-        padding: 2px 6px;
-        border-radius: 6px;
       }
       .token-box {
         margin-top: 12px;
@@ -88,162 +67,127 @@
         </div>
       </div>
     </div>
-  </body>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import {
-      getMessaging,
-      getToken,
-      onMessage,
-    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBEYRc3lWgrhf3JuzBVOI33sdelL53xuuk",
-      authDomain: "onerev-dev.firebaseapp.com",
-      projectId: "onerev-dev",
-      storageBucket: "onerev-dev.firebasestorage.app",
-      messagingSenderId: "782528078431",
-      appId: "1:782528078431:web:ccd3e92370c8e316c531ea",
-    };
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+      import {
+        getMessaging,
+        getToken,
+        onMessage,
+      } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js";
 
-    // คำนวณ basePath สำหรับ GitHub Pages
-    const parts = location.pathname.split("/").filter(Boolean);
-    const basePath = parts.length ? `/${parts[0]}/` : "/";
+      // --- base path สำหรับ GitHub Pages: https://<user>.github.io/<repo>/...
+      const parts = location.pathname.split("/").filter(Boolean); // ["poc-firebase-messaging", ...]
+      const BASE = parts.length ? `/${parts[0]}/` : "/"; // "/poc-firebase-messaging/" บน Pages, "/" เมื่อต้นโดเมน
+      const SW_PATH = `${BASE}firebase-messaging-sw.js`;
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    // Initialize Firebase Cloud Messaging and get a reference to the service
-    const m = getMessaging(app);
-    // const m = firebase.messaging();
-    const app_key =
-      "BFCv-L3AhpTkUvrUyGYLHpSv-CnSI0Nla7XaafAU4TqyXXfCZJrtrzScBMhFFfjryDZsPg0Ew8qKywXfLt_bYIg";
-    const btn = document.getElementById("btnToken");
-    const btnCopy = document.getElementById("btnCopy");
-    btn.addEventListener("click", async () => {
-      console.log("click button");
-      try {
-        btn.disabled = true;
-        btn.textContent = "Loading...";
-        registerUserFCM();
-      } catch (e) {
-        console.error("❌ Get token failed:", e);
-        alert("Get token failed: " + e.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Show FCM Token";
-      }
-    });
-    btnCopy.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(text.textContent.trim());
-        btnCopy.textContent = "Copied!";
-        setTimeout(() => (btnCopy.textContent = "Copy"), 1200);
-      } catch {
-        alert("คัดลอกไม่สำเร็จ");
-      }
-    });
+      const firebaseConfig = {
+        apiKey: "AIzaSyBEYRc3lWgrhf3JuzBVOI33sdelL53xuuk",
+        authDomain: "onerev-dev.firebaseapp.com",
+        projectId: "onerev-dev",
+        storageBucket: "onerev-dev.firebasestorage.app",
+        messagingSenderId: "782528078431",
+        appId: "1:782528078431:web:ccd3e92370c8e316c531ea",
+      };
 
-    onMessage(function (payload) {
-      console.log("Received Notification:", payload);
-      const theNotification = payload.data;
+      const VAPID_KEY =
+        "BFCv-L3AhpTkUvrUyGYLHpSv-CnSI0Nla7XaafAU4TqyXXfCZJrtrzScBMhFFfjryDZsPg0Ew8qKywXfLt_bYIg";
 
-      if (Notification.permission === "granted")
-        onNotification(theNotification);
-    });
+      const app = initializeApp(firebaseConfig);
+      const m = getMessaging(app);
 
-    function registerUserFCM() {
-      if (!("Notification" in window)) {
-        // Check if the browser supports notifications
-      } else if (Notification.permission === "granted") {
-        // Check whether notification permissions have already been granted;
-        // if so, create a token for that user and send to server
-        sendTokenToDB((done) => {
-          console.log("done", done);
-          if (done) {
-            onNotification({
-              title: "Successful",
-              body: "Your device has been register",
-              tag: "welcome",
-            });
+      const btn = document.getElementById("btnToken");
+      const btnCopy = document.getElementById("btnCopy");
+      const btnHide = document.getElementById("btnHide");
+      const tokenBox = document.getElementById("tokenBox");
+      const tokenText = document.getElementById("tokenText");
+
+      const notificationOptions = {
+        body: "Hello from FCM!",
+        icon: `${BASE}icon-192.png`,
+        badge: `${BASE}icon-192.png`,
+        tag: "demo",
+        data: { link_url: `${BASE}` },
+      };
+
+      btn.addEventListener("click", async () => {
+        try {
+          btn.disabled = true;
+          btn.textContent = "Loading...";
+
+          // ขอสิทธิ์แจ้งเตือน (ถ้ายังไม่ได้ให้)
+          if (Notification.permission !== "granted") {
+            await Notification.requestPermission();
           }
-        });
-      } else if (Notification.permission !== "denied") {
-        // We need to ask the user for permission
-        Notification.requestPermission().then((permission) => {
-          // If the user accepts, create a token and send to server
-          if (permission === "granted") {
-            sendTokenToDB((done) => {
-              console.log("done", done);
-              if (done) {
-                onNotification({
-                  title: "Successful",
-                  body: "Your device has been register",
-                  tag: "welcome",
-                });
-              }
-            });
-          } else {
-            alert("You won't be able to receive important notifications 😥!");
+          if (Notification.permission !== "granted") {
+            alert("อนุญาตการแจ้งเตือนก่อนนะครับ");
+            return;
           }
-        });
-      }
-    }
 
-    function onNotification(theNotification) {
-      const { title, link_url, ...options } = theNotification;
-      notification_options.data.link_url = link_url;
-
-      if ("serviceWorker" in navigator) {
-        // this will register the service worker or update it. More on service worker soon
-        const path = `${basePath}firebase-messaging-sw.js`;
-        console.log(path);
-
-        navigator.serviceWorker
-          .register(path, {
-            scope: basePath,
-          })
-          .then(function (registration) {
-            console.log("Service Worker Registered");
-            setTimeout(() => {
-              // display the notificaiton
-              registration
-                .showNotification(title, {
-                  ...notification_options,
-                  ...options,
-                })
-                .then((done) => {
-                  console.log("sent notificaiton to user");
-                  const audio = new Audio("./util/sound/one_soft_knock.mp3"); // only works on windows chrome
-                  audio.play();
-                })
-                .catch((err) => {
-                  console.error("Error sending notificaiton to user", err);
-                });
-              registration.update();
-            }, 100);
-          })
-          .catch(function (err) {
-            console.log("Service Worker Failed to Register", err);
+          // จดทะเบียน Service Worker ด้วย scope ที่ถูกต้องบน GitHub Pages
+          const reg = await navigator.serviceWorker.register(SW_PATH, {
+            scope: BASE,
           });
-      }
-    }
+          await reg.update();
 
-    function sendTokenToDB(done) {
-      getToken({
-        vapidKey: app_key,
-      })
-        .then((currentToken) => {
+          // สำคัญ: ส่ง registration เข้าไปให้ getToken เพื่อกัน Firebase ไปจดทะเบียน SW เองที่รากโดเมน
+          const currentToken = await getToken(m, {
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: reg,
+          });
+
           if (currentToken) {
-            console.log("current token for client: ", currentToken);
-            // Track the token -> client mapping, by sending to backend server
-            // show on the UI that permission is secured
-            // ... add you logic to send token to server
+            console.log("[FCM] token:", currentToken);
+            tokenText.textContent = currentToken;
+            tokenBox.hidden = false;
+
+            // เด้งโนติเล็ก ๆ ให้รู้ว่าเรียบร้อย
+            reg.showNotification("Successful", notificationOptions);
+          } else {
+            alert(
+              "ยังไม่ได้รับ token (อาจถูกบล็อก permission หรือ browser ไม่รองรับ)"
+            );
           }
-        })
-        .catch((err) => {
-          console.log("An error occurred while retrieving token. ", err);
-          // catch error while creating client token
-        });
-    }
-  </script>
+        } catch (e) {
+          console.error("Get token failed:", e);
+          alert("Get token failed: " + (e?.message || e));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Show FCM Token";
+        }
+      });
+
+      btnCopy.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(tokenText.textContent.trim());
+          btnCopy.textContent = "Copied!";
+          setTimeout(() => (btnCopy.textContent = "Copy"), 1200);
+        } catch {
+          alert("คัดลอกไม่สำเร็จ");
+        }
+      });
+
+      btnHide.addEventListener("click", () => {
+        tokenBox.hidden = true;
+      });
+
+      // foreground messages
+      onMessage(m, (payload) => {
+        console.log("[FCM] foreground message:", payload);
+        // โชว์เป็น Notification ผ่าน SW เพื่อให้หน้าปัจจุบันก็เห็นแบบเดียวกัน
+        if (navigator.serviceWorker?.ready) {
+          navigator.serviceWorker.ready.then((reg) => {
+            const data = payload?.data || {};
+            const { title = "Message", link_url, ...rest } = data;
+            const opts = {
+              ...notificationOptions,
+              ...rest,
+              data: { link_url: link_url || notificationOptions.data.link_url },
+            };
+            reg.showNotification(title, opts);
+          });
+        }
+      });
+    </script>
+  </body>
 </html>
