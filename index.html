@@ -193,7 +193,7 @@
         // this will register the service worker or update it. More on service worker soon
         navigator.serviceWorker
           .register("/poc-firebase-messaging/firebase-messaging-sw.js", {
-            scope: "./",
+            scope: "/poc-firebase-messaging",
           })
           .then(function (registration) {
             console.log("Service Worker Registered");
