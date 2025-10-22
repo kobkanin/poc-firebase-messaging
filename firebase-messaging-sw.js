@@ -19,7 +19,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // base ของ GitHub Pages (เช่น https://kobkanin.github.io/poc-firebase-messaging/)
-const scopeBase = self.registration.scope;
+const scopeBase = self.registration.scope + "/poc-firebase-messaging/";
 const iconUrl = new URL("icon-192.png", scopeBase).toString();
 
 const notification_options = {
